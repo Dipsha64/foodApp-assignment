@@ -27,4 +27,33 @@ const registerUser = async (req,res) =>{
     }
 }
 
-module.exports = { registerUser };
+const loginUser = async (req,res) =>{
+    try{
+        console.log("req login",req.body);
+        const { email , password } = req.body;
+        const isUserExist = await userModel.findOne({email});
+        console.log("isUserExist...",isUserExist);
+        if(isUserExist){
+            // const hashPaswrd = await bcrypt.compare(req.body.password,isUserExist.password);
+            bcrypt.compare(req.body.password, isUserExist.password, (err, data) => {
+                console.log("BCRYPT PASWD" , req.body.password , isUserExist.password);
+                if (data) {
+                    console.log("DATAAAAAA",data);
+                    let obj = {"_id": isUserExist._id , "username" : isUserExist.username , "email" : isUserExist.email}
+                    res.json({message : "login successfully",status : true , data : obj});
+                }
+                else {
+                    res.json({message : "Incorrect email & password, Please try it again",status : false});
+                }
+            })
+        }
+        else{
+            res.json({message : "Incorrect email & password, Please try it again",status : false});
+        }
+    }
+    catch(error){
+        console.log(error);
+    }
+}
+
+module.exports = { registerUser, loginUser };

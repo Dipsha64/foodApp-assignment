@@ -17,5 +17,5 @@ body,button,input {
 body {
   max-height: 100vh;
   max-width: 100vw;
-  overflow: hidden;
+  overflow: scroll;
 }

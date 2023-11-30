@@ -1,37 +1,38 @@
 import React from "react";
 import styled from "styled-components";
 import logoImg from "../../images/logo.png";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import { registerRoute } from "../../utils/APIRoutes";
+// import axios from "axios";
+// import { loginRoute } from "../../utils/APIRoutes";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUserAsync } from "../../features/auth/authSlice";
+import { isAuthenticated } from "../../features/auth/authSlice";
 
 function Login() {
     const { register, handleSubmit, formState: { errors } } = useForm();
     console.log("ERR",errors);
-    const navigate = useNavigate();
-    const toastOption = {
-        position : "top-right",
-        autoClose : 8000,
-        pauseOnHover : true,
-        theme : "dark",
-        draggable : true
-    }
+    const userIsLogin = useSelector(isAuthenticated);
+    console.log("userIsLogin..",userIsLogin);
+    const dispatch = useDispatch();
+    const navigate = useNavigate()
+
+    // useEffect(()=>{
+    //     if (userIsLogin) {
+    //         navigate('/')
+    //     }
+    // },[]);
+
     return ( 
         <><FormContainer>
             <div className="container">
-                <form noValidate onSubmit={handleSubmit((data)=>{
-                    console.log("FORM DATA",data);
-                    const result = axios.post(registerRoute,data);
-                    if(result.status === true){
-                        navigate("/");
-                    }
-                    if(result.status === false){
-                        toast.error(data.message,toastOption);
-                    }
+                <form noValidate onSubmit={handleSubmit(async(data)=>{
+                    dispatch(loginUserAsync(data)).then(() => {
+                        navigate('/');
+                      });
                 })}>
                     <div className="brand">
                         <img src={logoImg} alt="Logo"></img>
