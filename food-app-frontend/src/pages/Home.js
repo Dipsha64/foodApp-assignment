@@ -1,5 +1,6 @@
 import Navbar from "../components/Navbar";
 import HomeMenu from "../components/Products/HomeMenuItems";
+import About from "./About";
 
 function Home() {
     return ( 
@@ -9,6 +10,7 @@ function Home() {
         <>
             <Navbar></Navbar>
             <HomeMenu></HomeMenu>
+            <About></About>
         </>
      );
 }

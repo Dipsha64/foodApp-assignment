@@ -1,14 +1,11 @@
 const getProduct = async(req,res) =>{
     try{
-        console.log("FORRR",req.body.title);
+        console.log("FORRR",req.body.title,req.body.page);
         const query = req.body.title;
-        const data = await fetch("https://api.spoonacular.com/food/products/search?apiKey=18db11ed472b422f8952f535173c6521&query=shakes&number=10");
-
-        res.json({message : "Done successfully",status : true,data : data});
-        // fetch("https://api.spoonacular.com/food/products/search?apiKey=18db11ed472b422f8952f535173c6521&query=shakes&number=100").then((data)=>{
-        //     console.log("data...",data);
-            
-        // })
+        const page = req.body.page;
+        const response = await fetch(`https://api.spoonacular.com/food/products/search?apiKey=18db11ed472b422f8952f535173c6521&query=${query}&number=${page}`);
+        const data = await response.json();
+        res.json({message : "get data successfully",status : true,data : data});
         
     }
     catch(error){
@@ -16,4 +13,13 @@ const getProduct = async(req,res) =>{
     }
 }
 
-module.exports = { getProduct };
+const getProductDetails = async (req,res) =>{
+    try{
+
+    }
+    catch(error){
+        console.log(error);
+    }
+    // https://api.spoonacular.com/recipes/716429/information?apiKey=18db11ed472b422f8952f535173c6521
+}
+module.exports = { getProduct , getProductDetails };
