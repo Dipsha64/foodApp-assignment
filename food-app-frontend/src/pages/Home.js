@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import HomeMenu from "../components/Products/HomeMenuItems";
 import About from "./About";
+import FooterPage from "../components/Footer";
 
 function Home() {
     return ( 
@@ -11,6 +12,7 @@ function Home() {
             <Navbar></Navbar>
             <HomeMenu></HomeMenu>
             <About></About>
+            <FooterPage></FooterPage>
         </>
      );
 }

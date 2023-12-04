@@ -1,31 +1,22 @@
-import React,{Fragment,  useEffect, useState } from 'react';
+import React,{ useEffect, useState } from 'react';
 import axios from 'axios';
-import { selectedProducts } from "../../utils/APIRoutes";
-import { ChevronDownIcon, FunnelIcon, MinusIcon, PlusIcon, Squares2X2Icon } from '@heroicons/react/20/solid'
-import { ChevronLeftIcon, ChevronRightIcon, StarIcon } from '@heroicons/react/20/solid';
+import { selectedProducts, searchProduct } from "../../utils/APIRoutes";
+import { FunnelIcon, MinusIcon, PlusIcon } from '@heroicons/react/20/solid'
+import { StarIcon } from '@heroicons/react/20/solid';
 import styled from "styled-components";
 import { Link } from "react-router-dom"
-import { Disclosure, Menu, Transition } from '@headlessui/react'
+import { Disclosure } from '@headlessui/react'
 import { ThreeDots } from  'react-loader-spinner'
 import { useParams } from 'react-router-dom';
 import Navbar from '../Navbar';
+import {menuItems} from "../../app/APIMenuList";
 
-
-const sortOptions = [
-    { name: 'Best Rating', sort: 'rating',order: "desc", current: false },
-    { name: 'Price: Low to High', sort: 'price', order: "asc", current: false },
-    { name: 'Price: High to Low', sort: 'price',order: "desc", current: false },
-  ]
-  
-  function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-  }
 
 function ProductList() {
     const getParam = useParams();
-    console.log("getParam,,,",getParam);
     const totalItems = 0;
-
+    const [menuCategory,setMenuCategory] = useState([]);
+    
     const filters = [
         {
           id: 'brand',
@@ -35,49 +26,90 @@ function ProductList() {
         {
           id: 'category',
           name: 'Category',
-          options: [],
+          options: menuCategory,
         },
       ]
 
     const [allMenuItems,setAllMenuItems] = useState([]);
-    const [filter,setFilter] = useState({});
-    const [sort,setSort] = useState({});
     const [page,setPage] = useState(1);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-    const [isBusy, setBusy] = useState()
+    const [isBusy, setBusy] = useState();
+    const [filterValue,setFilterValue] = useState({});
 
-    const handleFilter = () =>{
-
+    const handleFilter = (e, section, option) =>{
+        console.log(e.target.checked, section, option);
+        if(e.target.checked){
+            setBusy(true);
+            setFilterValue(option);
+            const pageNum = 12;
+            setPage(pageNum);
+            getAPIData(option.value,pageNum);
+        }
+        else if(!e.target.checked){
+            setBusy(true);
+            const pageNum = 12;
+            setPage(pageNum);
+            getAPIData(getParam.id,pageNum);
+            setFilterValue({});
+        }
+    }
+    const handleSearch = (e) =>{
+        console.log("SEARCH....",e.target.value);
+        if(e.target.value !== ""){
+            setBusy(true);
+            const pageNum = 12;
+            setPage(pageNum);
+            axios.post(searchProduct,{value:e.target.value,page:pageNum})
+            .then((response)=> {
+                setAllMenuItems(response.data.data.results);
+                console.log("RESPONSE....",response);
+                setBusy(false);
+            })
+        }
     }
 
-    const handleSort = () =>{
-
-    }
-
-    const handlePage = () =>{
-
-    }
-
-    const getMoreProduct = (e) =>{
-        setPage(page + 12);
-        const pageNum = page +12;
-        axios.post(selectedProducts,{title:getParam.id,page:pageNum})
+    const getAPIData = (param,pageNum) =>{
+        axios.post(selectedProducts,{title:param,page:pageNum})
         .then((response)=> {
-            setAllMenuItems(response.data.data.products);
-            // setBusy(false);
+            setAllMenuItems(response.data.data.results);
+            setBusy(false);
         })
     }
 
+    const getMoreProduct = (e) =>{
+        console.log("filterValue...",filterValue);
+        if(filterValue && Object.keys(filterValue).length > 0){
+            setPage(page + 12);
+            const pageNum = page +12;
+            getAPIData(filterValue.value,pageNum);
+        }
+        else{
+            setPage(page + 12);
+            const pageNum = page +12;
+            getAPIData(getParam.id,pageNum);
+        }
+    }
+    const addToWishlist = (product) =>{
+        console.log(product, "product LIST");
+    }
+
+    // const handleFavourite = (e,product) =>{
+    //     console.log("handleFavourite" , e,product);
+    // }
 
     useEffect(()=>{
         setBusy(true);
         const pageNum = 12;
         setPage(pageNum);
-        axios.post(selectedProducts,{title:getParam.id,page:pageNum})
-        .then((response)=> {
-            setAllMenuItems(response.data.data.products);
-            setBusy(false);
-        })
+        getAPIData(getParam.id,pageNum);
+
+        if(menuItems && menuItems.length > 0){
+            const menuCategory = [];
+            for(let i=0;i<menuItems.length;i++){
+                menuCategory.push({"value" : menuItems[i].title,"label":menuItems[i].title.charAt(0).toUpperCase() + menuItems[i].title.slice(1),"checked" : false});
+            }
+            setMenuCategory(menuCategory);
+        }
     },[])
 
     return ( 
@@ -113,12 +145,24 @@ function ProductList() {
             <div className="bg-white">
                 <div>
                     {/* <MobileFilter /> */}
-                    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <main className="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
                     <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">All Products</h1>
 
                         <div className="flex items-center">
-                        <Menu as="div" className="relative inline-block text-left">
+                        <div class='max-w-md mx-auto'>
+                            <div class="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
+                                <div class="grid place-items-center h-full w-12 text-gray-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+
+                                <input onKeyUp={(e)=>handleSearch(e)} class="peer h-full w-full outline-none text-sm text-gray-700 pr-2"
+                                type="text"  id="search" placeholder="Search something.." /> 
+                            </div>
+                        </div>
+                        {/* <Menu as="div" className="relative inline-block text-left">
                             <div>
                             <Menu.Button className="group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900">
                                 Sort
@@ -159,12 +203,12 @@ function ProductList() {
                                 </div>
                             </Menu.Items>
                             </Transition>
-                        </Menu>
+                        </Menu> */}
 
-                        <button type="button" className="-m-2 ml-5 p-2 text-gray-400 hover:text-gray-500 sm:ml-7">
+                        {/* <button type="button" className="-m-2 ml-5 p-2 text-gray-400 hover:text-gray-500 sm:ml-7">
                             <span className="sr-only">View grid</span>
                             <Squares2X2Icon className="h-5 w-5" aria-hidden="true" />
-                        </button>
+                        </button> */}
                         <button
                             type="button"
                             className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
@@ -186,13 +230,53 @@ function ProductList() {
                         
                         {isBusy ? ( <ThreeDots  height="80" width="80" radius="9" olor="#4fa94d" ariaLabel="three-dots-loading"
                             wrapperStyle={{}} wrapperClassName="" visible={true}/>) : ( 
-                            <ProductGrid products={allMenuItems}/> )}
-                            <button onClick={(e)=>getMoreProduct(e)} type="button" className="loadMoreData text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">View More</button>
+                            // <ProductGrid products={allMenuItems} addToWishlist={addToWishlist}/> )}
+
+                            <div className="bg-white">
+                                <div className="mx-auto max-w-2xl px-4 py-0 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
+                                    <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+                                    { allMenuItems && allMenuItems.products.length > 0 && allMenuItems.products.map((product,index) => (
+                                        <div>
+                                        <div key={index} className="group relative border-solid border-2 p-2">
+                                            <Link to={`/product-detail/${product.id}`}>
+                                            <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-60">
+                                                <img
+                                                src={product.image}
+                                                alt={product.title}
+                                                className="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                                                />
+                                            </div>
+                                            <div className="mt-4 flex justify-between">
+                                                <div>
+                                                <h3 className="text-sm text-gray-700">
+                                                    <div href={product.image}>
+                                                    <span aria-hidden="true" className="absolute inset-0" />
+                                                    {product.title}
+                                                    </div>
+                                                </h3>
+                                                </div>
+                                            </div>
+                                            </Link>
+                                        </div>
+                                        <div>
+                                        <button type="button" class="root">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                        </svg>
+                                        </button>
+                                            {/* <span onClick={(e)=>addToWishlist(e,product)}><StarIcon className="w-6 h-6 inline"></StarIcon></span> */}
+                                            </div>
+                                        </div>
+
+                                    ))}
+                                    </div>
+                                </div>
+                                <button onClick={(e)=>getMoreProduct(e)} type="button" className="loadMoreData text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">View More</button>
+                            </div>
+                            )}
                         </div>               
                         </div>
                     </section>
-
-                        <Pagination page={page} setPage={setPage} handlePage={handlePage} totalItems={totalItems}/>
                     </main>
                 </div>
             </div>
@@ -200,57 +284,6 @@ function ProductList() {
         </>
     );
 }
-
-function Pagination({page,setPage,handlePage,totalItems ,ITEM_PERPAGE = 10}) {
-    const totalPages = Math.ceil(totalItems / ITEM_PERPAGE);
-    return (
-        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <div className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                onClick={(e)=>handlePage(page > 1 ? page-1 : page)} >
-              Previous
-            </div>
-            <div className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                onClick={(e)=> handlePage(page < totalPages ? page+1 : page)}>
-              Next
-            </div>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(page-1)*ITEM_PERPAGE+1}</span> to <span className="font-medium">{page*ITEM_PERPAGE}</span> of{' '}
-                <span className="font-medium">{totalItems}</span> results
-              </p>
-            </div>
-            <div>
-              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <div onClick={(e) => handlePage(page > 1 ? page - 1 : page)}
-                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                  <span className="sr-only">Previous</span>
-                  <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                {/* Current: "z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600", Default: "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0" */}
-                
-                {Array.from({ length: totalPages }).map((el, index) => (
-                  <div key={index} onClick={(e)=>handlePage(index+1)}
-                    aria-current="page"
-                    className={`relative cursor-pointer z-10 inline-flex items-center ${index+1 === page ? 'bg-indigo-600 text-white' : 'text-gray-400' } px-4 py-2 text-sm font-semibold focus:z-20 focus-visible:outline focus-visible:outline-2
-                            focus-visible:outline-offset-2 focus-visible:outline-indigo-600`}>
-                    {index + 1}
-                  </div>
-                ))
-                }
-                <div onClick={(e) => handlePage(page < totalPages ? page + 1 : page)}
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                  <span className="sr-only">Next</span>
-                  <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-                </div>
-              </nav>
-            </div>
-          </div>
-        </div>
-     );
-  }
   
   function DesktopFilter({handleFilter , filters}) {
     return ( 
@@ -301,41 +334,44 @@ function Pagination({page,setPage,handlePage,totalItems ,ITEM_PERPAGE = 10}) {
   </form> );
   }
   
-  function ProductGrid(allMenuItems) {
-    console.log("allMenuItems...",allMenuItems);
+  function ProductGrid(allMenuItems,addToWishlist) {
     return (
       <div className="bg-white">
         <div className="mx-auto max-w-2xl px-4 py-0 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
             <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
             { allMenuItems && allMenuItems.products.length > 0 && allMenuItems.products.map((product,index) => (
-                <Link to={`/product-detail/${product.id}`}>
+                <div>
                 <div key={index} className="group relative border-solid border-2 p-2">
-                <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-60">
-                    <img
-                    src={product.image}
-                    alt={product.title}
-                    className="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                    />
-                </div>
-                <div className="mt-4 flex justify-between">
-                    <div>
-                    <h3 className="text-sm text-gray-700">
-                        <div href={product.image}>
-                        <span aria-hidden="true" className="absolute inset-0" />
-                        {product.title}
+                    <Link to={`/product-detail/${product.id}`}>
+                    <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-60">
+                        <img
+                        src={product.image}
+                        alt={product.title}
+                        className="h-full w-full object-cover object-center lg:h-full lg:w-full"
+                        />
+                    </div>
+                    <div className="mt-4 flex justify-between">
+                        <div>
+                        <h3 className="text-sm text-gray-700">
+                            <div href={product.image}>
+                            <span aria-hidden="true" className="absolute inset-0" />
+                            {product.title}
+                            </div>
+                        </h3>
                         </div>
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      <StarIcon className="w-6 h-6 inline"></StarIcon>
-                      <span className="align-bottom">{product.rating}</span></p>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">${Math.round(product.price*(1-product.discountPercentage/100))}</p>
-                      <p className="text-sm font-medium line-through text-gray-900">${product.price}</p>
+                    </Link>
+                </div>
+                <div>
+                <button type="button" class="root">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                </svg>
+                </button>
+                    {/* <span onClick={(e)=>addToWishlist(e,product)}><StarIcon className="w-6 h-6 inline"></StarIcon></span> */}
                     </div>
                 </div>
-                </div>
-                </Link>
+
             ))}
             </div>
         </div>

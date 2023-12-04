@@ -5,6 +5,7 @@ import Register from "../src/components/Users/Signup";
 import Login from "../src/components/Users/Login";
 import Home from "../src/pages/Home";
 import ProductList from "../src/components/Products/ProductList";
+import ProductDetail from "./components/Products/ProductDetail";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/login" element={<Login></Login>}></Route>
         <Route path="/" element={<Home></Home>}></Route>
         <Route path="/product/:id" element={<ProductList></ProductList>}></Route>
+        <Route path="/product-detail/:id" element={<ProductDetail></ProductDetail>}></Route>
       </Routes>
     </BrowserRouter>
   );

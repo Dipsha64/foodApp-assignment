@@ -1,12 +1,10 @@
 const getProduct = async(req,res) =>{
     try{
-        console.log("FORRR",req.body.title,req.body.page);
         const query = req.body.title;
         const page = req.body.page;
-        const response = await fetch(`https://api.spoonacular.com/food/products/search?apiKey=18db11ed472b422f8952f535173c6521&query=${query}&number=${page}`);
+        const response = await fetch(`https://api.spoonacular.com/recipes/complexSearch/?apiKey=${process.env.APIKEY}&query=${query}&number=${page}`);
         const data = await response.json();
-        res.json({message : "get data successfully",status : true,data : data});
-        
+        res.json({message : "get data successfully",status : true,data : data}); 
     }
     catch(error){
         console.log(error);
@@ -15,11 +13,27 @@ const getProduct = async(req,res) =>{
 
 const getProductDetails = async (req,res) =>{
     try{
-
+        console.log("RE",req.body);
+        const query = req.body.id;
+        const response = await fetch(`https://api.spoonacular.com/recipes/${query}/information?apiKey=${process.env.APIKEY}`)
+        const data = await response.json();
+        res.json({message : "get data successfully",status : true,data : data});
     }
     catch(error){
         console.log(error);
     }
-    // https://api.spoonacular.com/recipes/716429/information?apiKey=18db11ed472b422f8952f535173c6521
 }
-module.exports = { getProduct , getProductDetails };
+
+const searchProduct = async (req,res) =>{
+    try{
+        const query = req.body.value;
+        const page = req.body.page;
+        const response = await fetch(`https://api.spoonacular.com/recipes/complexSearch/?apiKey=${process.env.APIKEY}&query=${query}&page=${page}`);
+        const data = await response.json();
+        res.json({message : "get data successfully",status : true,data : data});
+    }
+    catch(error){
+        console.log(error);
+    }
+}
+module.exports = { getProduct , getProductDetails, searchProduct };
