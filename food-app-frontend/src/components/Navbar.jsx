@@ -167,8 +167,9 @@ import logo from "../images/logo.png"
 import styled from "styled-components";
 import { Link } from "react-router-dom"
 import { signOutAsync } from "../features/auth/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { isAuthenticated } from "../features/auth/authSlice";
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -176,7 +177,9 @@ function classNames(...classes) {
 
 function Navbar() {
     const dispatch = useDispatch();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const userAuth = useSelector(isAuthenticated);
+    console.log("isAuthenticated" , userAuth , Object.keys(userAuth).length);
     const logout = () =>{
         dispatch(signOutAsync());
         console.log("logout");
@@ -246,15 +249,29 @@ function Navbar() {
                                 leaveTo="transform opacity-0 scale-95"
                             >
                                 <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                {Object.keys(userAuth).length > 0 ? (
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                        <a onClick={(e)=>logout(e)}
+                                            className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
+                                        >
+                                            Sign out
+                                        </a>
+                                        )}
+                                    </Menu.Item>
+                                ) : (
                                 <Menu.Item>
+                                    {/* <Link to={"/login"}> */}
                                     {({ active }) => (
-                                    <a onClick={(e)=>logout(e)}
-                                        className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
-                                    >
-                                        Sign out
+                                        <Link to={"/login"}>
+                                    <a className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}>
+                                        Login
                                     </a>
+                                    </Link>
                                     )}
+                                    {/* </Link> */}
                                 </Menu.Item>
+                                )}
                                 </Menu.Items>
                             </Transition>
                         </Menu>
