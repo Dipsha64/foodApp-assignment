@@ -1,7 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { loginUserAPI } from "../auth/authAPI";
-// import { toast } from "react-toastify";
-// import { useNavigate } from "react-router-dom";
+import { loginUserAPI, signOut } from "../auth/authAPI";
 
 const initialState = {
     userInfo: {},
@@ -12,22 +10,15 @@ const initialState = {
 export const loginUserAsync = createAsyncThunk(
     'user/loginUserAPI',
     async(userData)=>{
-        // const navigate = useNavigate();
-        // const toastOption = {
-        //     position : "top-right",
-        //     autoClose : 8000,
-        //     pauseOnHover : true,
-        //     theme : "dark",
-        //     draggable : true
-        // }
         const response = await loginUserAPI(userData);
-        // console.log("SLICE const",response);
-        // if(response.data && response.data.status === true){
-        //     navigate("/");
-        // }
-        // if(response.data && response.data.status === false){
-        //     toast(response.data.message,toastOption);
-        // }
+        return response.data;
+    }
+)
+
+export const signOutAsync = createAsyncThunk(
+    'user/signOut',
+    async(userId)=>{
+        const response = await signOut(userId);
         return response.data;
     }
 )
@@ -50,6 +41,13 @@ export const authSlice = createSlice({
                 state.loading = false
                 state.success = true
             })
+            // .addCase(signOutAsync.pending,(state)=>{
+            //     state.status = "Loading";
+            // })
+            // .addCase(signOutAsync.fulfilled,(state,action)=>{
+            //     state.success = false;
+            //     state.userInfo = null;
+            // })
     }
 })
 

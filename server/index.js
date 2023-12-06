@@ -7,7 +7,7 @@ const cors = require("cors");
 connectDb();
 app.use(cors())
 
-app.use("/api/auth",require("./routes/userRoutes.js"));
+app.use("/api",require("./routes/userRoutes.js"));
 app.use("/app",require("./routes/productRoutes.js"));
 
 const port = process.env.PORT;

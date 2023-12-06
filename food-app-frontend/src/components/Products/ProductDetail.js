@@ -4,6 +4,8 @@ import axios from "axios";
 import { productDetailRoute } from "../../utils/APIRoutes";
 import styled from "styled-components";
 import commonImage from "../../images/commonImage.jpeg";
+import { ThreeDots } from  'react-loader-spinner'
+import Navbar from "../Navbar";
 
 function ProductDetail() {
     const getParam = useParams();
@@ -23,59 +25,58 @@ function ProductDetail() {
     return ( 
         <>
         <FormContainer>
+            <Navbar></Navbar>
             <div class="container-fluid page-header py-5">
-                <h1 class="text-center text-white display-6">Shop Detail</h1>
-                <ol class="breadcrumb justify-content-center mb-0">
-                    <li class="breadcrumb-item"><a href="#">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#">Pages</a></li>
-                    <li class="breadcrumb-item active text-white">Shop Detail</li>
-                </ol>
+                {/* <h1 class="text-center text-black display-6">Shop Detail</h1> */}
             </div>
-
-            <div class="grid grid-cols-2 gap-3 main-about-section">
-                {productData.image !== undefined ? <div className="image-box"><img src={productData.image} alt={productData.title}/></div> : 
-                <div className="image-box"><img src={commonImage} alt={productData.title}/></div>}
-            
-                <div className="detail-box">
-                    <h1 className="heading-section"> {productData.title} </h1>
-                    {/* <span>{Object.keys(productData.dishTypes).length} {productData.dishTypes.length}</span> */}
-                    {productData.dishTypes && productData.dishTypes.length > 0 ? 
-                    <div className="chip-section">
-                    {productData.dishTypes.map((season) => (
-                        <div className="chip">
-                            {season}
-                        {/* <span key={season}>{season}</span> */}
+            {isBusy ? ( <ThreeDots  height="80" width="80" radius="9" olor="#000000" ariaLabel="three-dots-loading"
+                wrapperStyle={{}} wrapperClassName="" visible={true}/>) : ( 
+                <div class="grid grid-cols-2 gap-3 main-about-section">
+                    
+                    {productData.image !== undefined ? <div className="image-box"><img src={productData.image} alt={productData.title}/></div> : 
+                    <div className="image-box"><img src={commonImage} alt={productData.title}/></div>}
+                
+                    <div className="detail-box">
+                        <h1 className="heading-section"> {productData.title} </h1>
+                        {/* <span>{Object.keys(productData.dishTypes).length} {productData.dishTypes.length}</span> */}
+                        {productData.dishTypes && productData.dishTypes.length > 0 ? 
+                        <div className="chip-section">
+                        {productData.dishTypes.map((season) => (
+                            <div className="chip">
+                                {season}
+                            {/* <span key={season}>{season}</span> */}
+                            </div>
+                            ))}
                         </div>
-                        ))}
-                    </div>
-                    : <div>No Data Awailable</div>}
-                    <h4 className="price-section">$ {productData.pricePerServing}</h4>
-                    <p dangerouslySetInnerHTML={{__html: productData.summary}} ></p>
-                    <div class="btn-box">
-                    <a href="" class="btn1">
-                        Order Now
-                    </a>
+                        : <div>No Data Awailable</div>}
+                        <h4 className="price-section">$ {productData.pricePerServing}</h4>
+                        <p dangerouslySetInnerHTML={{__html: productData.summary}} ></p>
+                        <div class="btn-box">
+                        <a href="" class="btn1">
+                            Order Now
+                        </a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
             <div className="section-second">
                 Ingredients List
-                <div className="container mx-auto my-96">
+                <div className="container mx-auto">
                     <div className="grid md:grid-cols-2 sm:grid-cols-1 lg:grid-cols-8 gap-4">
                     { productData.extendedIngredients && productData.extendedIngredients.length > 0 && productData.extendedIngredients.map((item) => (
                         <div className="w-full relative group">
                             <div className="max-w-80 max-h-80 relative overflow-y-hidden ">
-                                <div>
+                                <div className="box-image">
                                     <img className="w-full h-full" src={`https://spoonacular.com/cdn/ingredients_100x100/`+item.image} />
                                 </div>
                             </div>
                             <div className="max-w-80 py-6 flex flex-col gap-1 border-[1px] border-t-0 px-4">
                                 <div className="flex items-center justify-between font-titleFont">
-                                <h2 className="text-lg text-primeColor font-bold">
+                                <h2 className="text-sm text-primeColor">
                                     {item.name}
                                 </h2>
-                                <h3 className="text-lg text-primeColor font-bold">
-                                    {item.name}
+                                <h3 className="text-sm text-primeColor">
+                                    {item.amount} {item.unit}
                                 </h3>
                                 {/* <p className="text-[#767676] text-[14px]">${item.name}</p> */}
                                 </div>

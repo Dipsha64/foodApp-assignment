@@ -44,7 +44,7 @@ function HomeMenu() {
                     <h1 className="text-center text-5xl pb-12">Our Menu</h1>
                     <div className="main-grid-section grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3  gap-y-28 lg:gap-y-16">
 
-                    {menuItems.map((product,index) => (
+                    {/* {menuItems.map((product,index) => (
                         <Link to={`/product/${product.title}`}>
                             <div key={index} className="relative group h-48 flex   flex-col rounded-xl bg-white bg-clip-border text-gray-700 shadow-md">
                                 <div className="h-28">
@@ -63,7 +63,7 @@ function HomeMenu() {
                                 </div>
                             </div>
                         </Link>
-                    ))}
+                    ))} */}
 
                     {menuItems.map((product,index) => (
                     <Link to={`/product/${product.title}`}>
@@ -71,11 +71,10 @@ function HomeMenu() {
                         <div class="box">
                         <div>
                             <div class="img-box">
-                                <img className="img-section" src={fsection1} alt=""/>
+                                <img className="img-section" src={product.image} alt=""/>
                             </div>
                             <div class="detail-box">
-                            <h2>
-                                Delicious Pizza
+                            <h2>{product.title.charAt(0).toUpperCase() + product.title.slice(1)}
                             </h2>
                             <p>
                                 Veniam debitis quaerat officiis quasi cupiditate quo, quisquam velit, magnam voluptatem repellendus sed eaque
@@ -161,7 +160,7 @@ const FormContainer = styled.div`
         font-size: 22px;
     }
     .main-grid-section {
-        column-gap: 20px;
+        column-gap: 240px;
     }
     // .all-pizza-section {
     //     position: absolute; left: 0px; top: 0px;

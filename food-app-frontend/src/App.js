@@ -6,6 +6,8 @@ import Login from "../src/components/Users/Login";
 import Home from "../src/pages/Home";
 import ProductList from "../src/components/Products/ProductList";
 import ProductDetail from "./components/Products/ProductDetail";
+import FavouriteProduct from "./components/Products/FavouriteProduct";
+// import Protected from "../src/app/Protected";
 
 function App() {
   return (
@@ -16,6 +18,9 @@ function App() {
         <Route path="/" element={<Home></Home>}></Route>
         <Route path="/product/:id" element={<ProductList></ProductList>}></Route>
         <Route path="/product-detail/:id" element={<ProductDetail></ProductDetail>}></Route>
+        {/* <Route element={<Protected />}> */}
+          <Route path="/wishlist-item" element={<FavouriteProduct></FavouriteProduct>}></Route>
+        {/* </Route> */}
       </Routes>
     </BrowserRouter>
   );

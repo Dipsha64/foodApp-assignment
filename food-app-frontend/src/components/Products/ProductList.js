@@ -1,8 +1,7 @@
 import React,{ useEffect, useState } from 'react';
 import axios from 'axios';
-import { selectedProducts, searchProduct } from "../../utils/APIRoutes";
-import { FunnelIcon, MinusIcon, PlusIcon } from '@heroicons/react/20/solid'
-import { StarIcon } from '@heroicons/react/20/solid';
+import { selectedProducts, searchProduct, favouriteProductRoute } from "../../utils/APIRoutes";
+import { FunnelIcon, MinusIcon, PlusIcon } from '@heroicons/react/20/solid';
 import styled from "styled-components";
 import { Link } from "react-router-dom"
 import { Disclosure } from '@headlessui/react'
@@ -10,11 +9,16 @@ import { ThreeDots } from  'react-loader-spinner'
 import { useParams } from 'react-router-dom';
 import Navbar from '../Navbar';
 import {menuItems} from "../../app/APIMenuList";
+import { useSelector , useDispatch } from 'react-redux';
+import { ToastContainer, toast } from "react-toastify";
+import { savedProductAsync, addToWishListAsync, removeWishlistAsync } from "../../features/product/productSlice";
+import 'react-toastify/dist/ReactToastify.css';
 
 
 function ProductList() {
+    const userDetail = useSelector((state)=>state.auth.userInfo);
+    const dispatch = useDispatch();
     const getParam = useParams();
-    const totalItems = 0;
     const [menuCategory,setMenuCategory] = useState([]);
     
     const filters = [
@@ -29,15 +33,26 @@ function ProductList() {
           options: menuCategory,
         },
       ]
+    
+      const toastOption = {
+        position : "top-right",
+        autoClose : 8000,
+        pauseOnHover : true,
+        theme : "dark",
+        draggable : true
+    }
 
     const [allMenuItems,setAllMenuItems] = useState([]);
     const [page,setPage] = useState(1);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [isBusy, setBusy] = useState();
     const [filterValue,setFilterValue] = useState({});
+    // const [favouriteItem,setFavouriteItem] = useState();
+    // const [savedProductList,setSavedProductList] = useState([]);
 
     const handleFilter = (e, section, option) =>{
-        console.log(e.target.checked, section, option);
+        const newFilter = { ...filterValue };
+        console.log("newFilter..",newFilter ,section);
         if(e.target.checked){
             setBusy(true);
             setFilterValue(option);
@@ -53,16 +68,40 @@ function ProductList() {
             setFilterValue({});
         }
     }
+    const addToWishlist = (e,product,value) =>{
+        const statusVal = value;
+        if(value){
+            dispatch(addToWishListAsync({proData : product,userData : userDetail,value:statusVal})).then((result)=>{
+                if(result.payload.status){
+                    let index = allMenuItems.findIndex((item)=>{
+                        return item.id === result.payload.data.productDetail.id
+                    })
+                    if(index != -1){
+                        allMenuItems[index].isFavourite = true;
+                    }
+                    setAllMenuItems(allMenuItems);
+                    toast(result.payload.data.message,toastOption);
+                }
+            })
+        }
+        if(!value){
+            const proData = { "productId" : product.id, "userId": userDetail._id}
+            dispatch(removeWishlistAsync(proData)).then((res)=>{
+                console.log("DELETE , res",res);
+            })
+        }
+    }
+
     const handleSearch = (e) =>{
-        console.log("SEARCH....",e.target.value);
         if(e.target.value !== ""){
             setBusy(true);
             const pageNum = 12;
             setPage(pageNum);
             axios.post(searchProduct,{value:e.target.value,page:pageNum})
             .then((response)=> {
-                setAllMenuItems(response.data.data.results);
-                console.log("RESPONSE....",response);
+                dispatch(savedProductAsync(userDetail)).then((result)=>{
+                    addWishListData(result,response);
+                })
                 setBusy(false);
             })
         }
@@ -71,13 +110,32 @@ function ProductList() {
     const getAPIData = (param,pageNum) =>{
         axios.post(selectedProducts,{title:param,page:pageNum})
         .then((response)=> {
-            setAllMenuItems(response.data.data.results);
+            dispatch(savedProductAsync(userDetail)).then((result)=>{
+                addWishListData(result,response);
+            })
             setBusy(false);
         })
     }
 
+    const addWishListData = (result,response) =>{
+        const savedProductList = result.payload.data;
+        if(savedProductList && savedProductList.length > 0){
+            for(let j=0;j<savedProductList.length;j++){
+                let index = response.data.data.results.findIndex((item)=>{
+                    return item.id === savedProductList[j].productDetail.id
+                })
+                if(index !== -1){
+                    response.data.data.results[index].isFavourite = true;
+                }
+            }
+            setAllMenuItems(response.data.data.results);
+        }
+        else{
+            setAllMenuItems(response.data.data.results);
+        }
+    }
+
     const getMoreProduct = (e) =>{
-        console.log("filterValue...",filterValue);
         if(filterValue && Object.keys(filterValue).length > 0){
             setPage(page + 12);
             const pageNum = page +12;
@@ -89,10 +147,6 @@ function ProductList() {
             getAPIData(getParam.id,pageNum);
         }
     }
-    const addToWishlist = (product) =>{
-        console.log(product, "product LIST");
-    }
-
     // const handleFavourite = (e,product) =>{
     //     console.log("handleFavourite" , e,product);
     // }
@@ -102,7 +156,6 @@ function ProductList() {
         const pageNum = 12;
         setPage(pageNum);
         getAPIData(getParam.id,pageNum);
-
         if(menuItems && menuItems.length > 0){
             const menuCategory = [];
             for(let i=0;i<menuItems.length;i++){
@@ -110,178 +163,71 @@ function ProductList() {
             }
             setMenuCategory(menuCategory);
         }
+
     },[])
 
-    return ( 
-        // <>
-        // <FormContainer>
-        // <div>
-        //     <section className="bg-white dark:bg-gray-900">
-        //         <div className="container px-6 py-10 mx-auto">
-        //             <h1 className="w-48 h-2 mx-auto bg-gray-200 rounded-lg dark:bg-gray-700"></h1>
+    // useEffect(()=>{
+    //     dispatch(savedProductAsync(userDetail)).then((result)=>{
+    //         const savedProductList = result.payload.data;
+    //         console.log("savedProductList..",savedProductList , allMenuItems);
+    //         // setSavedProductList(savedProductList);
+    //     })
+    // },[])
 
-        //             <p className="w-64 h-2 mx-auto mt-4 bg-gray-200 rounded-lg dark:bg-gray-700"></p>
-        //             <p className="w-64 h-2 mx-auto mt-4 bg-gray-200 rounded-lg sm:w-80 dark:bg-gray-700"></p>
-
-        //             <div className="grid grid-cols-1 gap-8 mt-8 xl:mt-12 xl:gap-12 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3">
-        //             {allMenuItems.map((product,index) => (
-        //                 <div key={index} className="w-full ">
-        //                     <div className="w-full h-64 bg-gray-300 rounded-lg dark:bg-gray-600 box-image">
-        //                         <img src={product.image} />
-        //                     </div>
-        //                         <h1>{product.title}</h1>
-        //                     <p></p>
-        //                 </div>
-        //                 ))}
-        //             </div>
-        //         </div>
-        //     </section>
-        // </div>
-        // </FormContainer>
-        // </>
+    return (
         <>
-            <FormContainer>
-            <Navbar></Navbar>
-            <div className="bg-white">
-                <div>
-                    {/* <MobileFilter /> */}
-                    <main className="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
-                        <h1 className="text-4xl font-bold tracking-tight text-gray-900">All Products</h1>
+        <FormContainer>
+        <Navbar></Navbar>
+        <div className="bg-white">
+            <div>
+                {/* <MobileFilter /> */}
+                <main className="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
+                <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">All Products</h1>
 
-                        <div className="flex items-center">
-                        <div class='max-w-md mx-auto'>
-                            <div class="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
-                                <div class="grid place-items-center h-full w-12 text-gray-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-
-                                <input onKeyUp={(e)=>handleSearch(e)} class="peer h-full w-full outline-none text-sm text-gray-700 pr-2"
-                                type="text"  id="search" placeholder="Search something.." /> 
-                            </div>
-                        </div>
-                        {/* <Menu as="div" className="relative inline-block text-left">
-                            <div>
-                            <Menu.Button className="group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900">
-                                Sort
-                                <ChevronDownIcon
-                                className="-mr-1 ml-1 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500"
-                                aria-hidden="true"
-                                />
-                            </Menu.Button>
+                    <div className="flex items-center">
+                    <div class='max-w-md mx-auto'>
+                        <div class="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
+                            <div class="grid place-items-center h-full w-12 text-gray-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
                             </div>
 
-                            <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
-                            >
-                            <Menu.Items className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                <div className="py-1">
-                                {sortOptions.map((option) => (
-                                    <Menu.Item key={option.name}>
-                                    {({ active }) => (
-                                        <p
-                                        onClick={e=>handleSort(e,option)}
-                                        className={classNames(
-                                            option.current ? 'font-medium text-gray-900' : 'text-gray-500',
-                                            active ? 'bg-gray-100' : '',
-                                            'block px-4 py-2 text-sm'
-                                        )}
-                                        >
-                                        {option.name}
-                                        </p>
-                                    )}
-                                    </Menu.Item>
-                                ))}
-                                </div>
-                            </Menu.Items>
-                            </Transition>
-                        </Menu> */}
-
-                        {/* <button type="button" className="-m-2 ml-5 p-2 text-gray-400 hover:text-gray-500 sm:ml-7">
-                            <span className="sr-only">View grid</span>
-                            <Squares2X2Icon className="h-5 w-5" aria-hidden="true" />
-                        </button> */}
-                        <button
-                            type="button"
-                            className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
-                            onClick={() => setMobileFiltersOpen(true)}
-                        >
-                            <span className="sr-only">Filters</span>
-                            <FunnelIcon className="h-5 w-5" aria-hidden="true" />
-                        </button>
+                            <input onKeyUp={(e)=>handleSearch(e)} class="peer h-full w-full outline-none text-sm text-gray-700 pr-2"
+                            type="text"  id="search" placeholder="Search something.." /> 
                         </div>
                     </div>
-
-                    <section aria-labelledby="products-heading" className="pb-24 pt-6">
-
-                        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-                        {/* Filters */}
-                        <DesktopFilter handleFilter={handleFilter} filters={filters}/>
-                        {/* Product grid */}
-                        <div className="lg:col-span-3">
-                        
-                        {isBusy ? ( <ThreeDots  height="80" width="80" radius="9" olor="#4fa94d" ariaLabel="three-dots-loading"
-                            wrapperStyle={{}} wrapperClassName="" visible={true}/>) : ( 
-                            // <ProductGrid products={allMenuItems} addToWishlist={addToWishlist}/> )}
-
-                            <div className="bg-white">
-                                <div className="mx-auto max-w-2xl px-4 py-0 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
-                                    <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-                                    { allMenuItems && allMenuItems.products.length > 0 && allMenuItems.products.map((product,index) => (
-                                        <div>
-                                        <div key={index} className="group relative border-solid border-2 p-2">
-                                            <Link to={`/product-detail/${product.id}`}>
-                                            <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-60">
-                                                <img
-                                                src={product.image}
-                                                alt={product.title}
-                                                className="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                                                />
-                                            </div>
-                                            <div className="mt-4 flex justify-between">
-                                                <div>
-                                                <h3 className="text-sm text-gray-700">
-                                                    <div href={product.image}>
-                                                    <span aria-hidden="true" className="absolute inset-0" />
-                                                    {product.title}
-                                                    </div>
-                                                </h3>
-                                                </div>
-                                            </div>
-                                            </Link>
-                                        </div>
-                                        <div>
-                                        <button type="button" class="root">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                                        </svg>
-                                        </button>
-                                            {/* <span onClick={(e)=>addToWishlist(e,product)}><StarIcon className="w-6 h-6 inline"></StarIcon></span> */}
-                                            </div>
-                                        </div>
-
-                                    ))}
-                                    </div>
-                                </div>
-                                <button onClick={(e)=>getMoreProduct(e)} type="button" className="loadMoreData text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">View More</button>
-                            </div>
-                            )}
-                        </div>               
-                        </div>
-                    </section>
-                    </main>
+                    <button
+                        type="button"
+                        className="-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden"
+                        onClick={() => setMobileFiltersOpen(true)}
+                    >
+                        <span className="sr-only">Filters</span>
+                        <FunnelIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    </div>
                 </div>
+
+                <section aria-labelledby="products-heading" className="pb-24 pt-6">
+                    <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+                    {/* Filters */}
+                    <DesktopFilter handleFilter={handleFilter} addToWishlist={addToWishlist} filters={filters}/>
+                    {/* Product grid */}
+                    <div className="lg:col-span-3">
+                    {isBusy ? ( <ThreeDots  height="80" width="80" radius="9" olor="#000000" ariaLabel="three-dots-loading"
+                        wrapperStyle={{}} wrapperClassName="" visible={true}/>) : ( 
+                        <ProductGrid allMenuItems={allMenuItems}  addToWishlist={addToWishlist}/>
+                        )}
+                    </div>     
+                    </div>
+                    <button onClick={(e)=>getMoreProduct(e)} type="button" className="loadMoreData text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700">View More</button>
+                </section>
+                </main>
             </div>
-            </FormContainer>
-        </>
+        </div>
+        </FormContainer>
+        <ToastContainer /></>
     );
 }
   
@@ -334,12 +280,12 @@ function ProductList() {
   </form> );
   }
   
-  function ProductGrid(allMenuItems,addToWishlist) {
+  function ProductGrid({allMenuItems,addToWishlist}) {
     return (
       <div className="bg-white">
         <div className="mx-auto max-w-2xl px-4 py-0 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
             <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-            { allMenuItems && allMenuItems.products.length > 0 && allMenuItems.products.map((product,index) => (
+            { allMenuItems.map((product,index) => (
                 <div>
                 <div key={index} className="group relative border-solid border-2 p-2">
                     <Link to={`/product-detail/${product.id}`}>
@@ -363,13 +309,23 @@ function ProductList() {
                     </Link>
                 </div>
                 <div>
-                <button type="button" class="root">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                </svg>
-                </button>
-                    {/* <span onClick={(e)=>addToWishlist(e,product)}><StarIcon className="w-6 h-6 inline"></StarIcon></span> */}
-                    </div>
+                    {product.isFavourite}
+                    {/* {savedProductList.find((item)=>item.productId === product.id) ? "yes" : "Noo"} */}
+                { product.isFavourite ? (
+                    <button type="button" class="root" onClick={(e)=>addToWishlist(e,product,false)}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.3118 5.9212C9.40424 4.01366 6.31821 4.00439 4.41892 5.90368C2.51963 7.80297 2.5289 10.889 4.43644 12.7965L11.4977 19.8578C11.7906 20.1507 12.2654 20.1507 12.5583 19.8578L19.5829 12.8374C21.4778 10.9319 21.4718 7.85453 19.5639 5.94665C17.6529 4.0357 14.5655 4.02642 12.6628 5.92911L11.9919 6.6013L11.3118 5.9212Z" fill="#212121"/>
+                        </svg>
+                    </button>
+                ) : (
+                    <button type="button" class="root" onClick={(e)=>addToWishlist(e,product,true)}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.3118 5.9212C9.40424 4.01366 6.31821 4.00439 4.41892 5.90368C2.51963 7.80297 2.5289 10.889 4.43644 12.7965L11.4977 19.8578C11.7906 20.1507 12.2654 20.1507 12.5583 19.8578L19.5829 12.8374C21.4778 10.9319 21.4718 7.85453 19.5639 5.94665C17.6529 4.0357 14.5655 4.02642 12.6628 5.92911L11.9919 6.6013L11.3118 5.9212ZM18.5193 11.7797L12.028 18.2668L5.4971 11.7359C4.17392 10.4127 4.1675 8.27641 5.47958 6.96434C6.79165 5.65227 8.92795 5.65869 10.2511 6.98186L11.4652 8.19589C11.7631 8.49379 12.2478 8.48795 12.5384 8.18297L13.7234 6.98977C15.0389 5.6743 17.1766 5.68072 18.5032 7.00731C19.8267 8.33082 19.8309 10.4607 18.5193 11.7797Z" fill="#212121"/>
+                        </svg>
+                    </button>
+                )
+                }
+                </div>
                 </div>
 
             ))}
@@ -386,7 +342,7 @@ const FormContainer = styled.div`
     }
     .loadMoreData {
         margin-top: 100px;
-        margin-left: 243px;
+        margin-left: 944px;
     }
 `
 
