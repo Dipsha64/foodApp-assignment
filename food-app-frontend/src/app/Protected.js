@@ -5,11 +5,13 @@ import { isAuthenticated } from "../features/auth/authSlice";
 
 function Protected({children}) {
     const user = useSelector(isAuthenticated);
-    if(!user){
+    console.log("isAuthenticated" , user , Object.keys(user).length);
+    if(Object.keys(user).length <= 0){
         return <Navigate to={"/login"} replace={true}></Navigate>
     }
-    if(user){
-        return <Navigate to={"/"} replace={true}></Navigate>
+    if(Object.keys(user).length > 0){
+        return children;
+        // {return <Navigate to={"/"} replace={true}></Navigate>}
     }
     return ( children );
 }

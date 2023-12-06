@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, createAction } from "@reduxjs/toolkit";
 import { loginUserAPI, signOut } from "../auth/authAPI";
 
 const initialState = {
@@ -15,7 +15,7 @@ export const loginUserAsync = createAsyncThunk(
     }
 )
 
-export const signOutAsync = createAsyncThunk(
+export const signOutAsync = createAction(
     'user/signOut',
     async(userId)=>{
         const response = await signOut(userId);
@@ -41,9 +41,9 @@ export const authSlice = createSlice({
                 state.loading = false
                 state.success = true
             })
-            // .addCase(signOutAsync.pending,(state)=>{
-            //     state.status = "Loading";
-            // })
+            .addCase(signOutAsync,(state)=>{
+                Object.assign(state, initialState);
+            })
             // .addCase(signOutAsync.fulfilled,(state,action)=>{
             //     state.success = false;
             //     state.userInfo = null;
