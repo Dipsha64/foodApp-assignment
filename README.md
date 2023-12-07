@@ -3,3 +3,5 @@ This  repository is based on food product using MERN.
 
 * First Create React Project using `npx create-react-app food-app-frontend`.
 * Then create node js Project using `npm init`
+* For run node project, write command of `npm run dev`
+* Install "express,mongodb,mongoose,nodemon,dotenv,cors,bcrypt" packages in node server.
