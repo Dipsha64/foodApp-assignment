@@ -31,8 +31,9 @@ function FavouriteProduct() {
                 <h1 class="text-3xl lg:text-4xl tracking-tight font-semibold leading-8 lg:leading-9 text-gray-800 dark:text-black dark:text-black">Favourites</h1>
                 </div>
                 <div class="mt-4">
-                <p class="text-2xl tracking-tight leading-6 text-gray-600 dark:text-black">03 items</p>
+                <p class="text-2xl tracking-tight leading-6 text-gray-600 dark:text-black">{productItem.length > 0 ? productItem.length + " items" : ""}</p>
                 </div>
+                {productItem.length > 0 ? (
                 <div class="mt-10 lg:mt-12 grid grid-cols-1 lg:grid-cols-3 gap-x-8 gap-y-10 lg:gap-y-0">
 
                 { productItem && productItem.map((product,index) => (
@@ -57,6 +58,11 @@ function FavouriteProduct() {
                     </div>
                 ))}
                 </div>
+                ) : (
+                    <div>
+                        <h2>No Product available!</h2>
+                    </div>
+                )}
             </div>
         </div>
         </FormContainer>

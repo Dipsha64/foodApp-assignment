@@ -23,11 +23,6 @@ function ProductList() {
     
     const filters = [
         {
-          id: 'brand',
-          name: 'Brands', 
-          options: [],
-        },
-        {
           id: 'category',
           name: 'Category',
           options: menuCategory,
@@ -183,7 +178,7 @@ function ProductList() {
                 {/* <MobileFilter /> */}
                 <main className="mx-auto max-w-9xl px-4 sm:px-6 lg:px-8">
                 <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">All Products</h1>
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Filter</h1>
 
                     <div className="flex items-center">
                     <div class='max-w-md mx-auto'>
@@ -258,7 +253,7 @@ function ProductList() {
                       id={`filter-${section.id}-${optionIdx}`}
                       name={`${section.id}[]`}
                       defaultValue={option.value}
-                      type="checkbox"
+                      type="radio"
                       defaultChecked={option.checked}
                       onClick={e=>handleFilter(e,section,option)}
                       className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
